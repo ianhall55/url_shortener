@@ -5,6 +5,7 @@ class ShortenedURL < ActiveRecord::Base
   validates :short_url, uniqueness: true
   validate :url_too_long
   validate :no_spamming
+  validate :none_premium
 
   def self.random_code
     code = nil
@@ -52,6 +53,12 @@ class ShortenedURL < ActiveRecord::Base
   has_many :topics,
     through: :taggings,
     source: :tag_topic
+
+  def none_premium
+    unless submitter.submitted_urls.count <= 5 || submitter.premium
+      self.errors[:user] << "too many URLs for non-premium user"
+    end
+  end
 
   def no_spamming
     urls = submitter.submitted_urls.where("created_at > ?", 1.minutes.ago)
